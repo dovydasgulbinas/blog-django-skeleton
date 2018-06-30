@@ -1,0 +1,7 @@
+*.pyc
+env/
+.secrets/
+logs/
+static/
+sandbox/
+*.sqlite3
