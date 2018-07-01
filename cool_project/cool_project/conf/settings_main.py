@@ -11,19 +11,74 @@ https://docs.djangoproject.com/en/2.0/ref/settings/
 """
 
 import os
-
-# Build paths inside the project like this: os.path.join(BASE_DIR, ...)
-BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-
-
-# Quick-start development settings - unsuitable for production
-# See https://docs.djangoproject.com/en/2.0/howto/deployment/checklist/
-
-# SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'gd$%px79r#vi3y4hvicay1==fgj#lxg^0k&nr1t6bg8ay0c(02'
+import io
+import configparser
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
+SECTION = 'test'  # when using production then SECTION = 'prod'
+
+# we create a base directory 2 parent directories UP.
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+# we need to go one dir up because our settings file in one folder deeper than default
+BASE_DIR = os.path.dirname(os.path.dirname(BASE_DIR))
+SECRETS_DIR = os.path.join(BASE_DIR, '.secrets')
+SECRETS_FILE_PATH = os.path.join(SECRETS_DIR, 'secrets.ini')
+LOGS_DIR = os.path.join(BASE_DIR, 'logs')
+LOG_MAIN = os.path.join(LOGS_DIR, 'django_main.log')
+
+CONF = configparser.ConfigParser()
+CONF.read(SECRETS_FILE_PATH)
+# this is a magic line, because based on what value SECTION= holds we will
+# able to choose our settings in this case test OR prod
+SECRETS = CONF[SECTION]
+
+# we grab our `secret_key` from our `secrets.ini` file
+SECRET_KEY = SECRETS['secret_key']
+
+# Let's add basic logging to file.
+
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+
+    # you can have as many formatter you want.  assign different formatters to
+    # different handlers
+
+    'formatters': {
+        'simple': {
+            'format': '%(asctime)s - %(levelname)s - %(message)s'
+        },
+        'multi': {
+            'format': '(%(threadName)-10s) %(asctime)s %(levelname)s: %(message)s'
+        },
+    },
+
+    'handlers': {
+        'applogfile': {
+            'level': 'DEBUG',
+            'class': 'logging.FileHandler',
+            'filename': LOG_MAIN,
+            'formatter': 'multi',
+        },
+        'console': {
+            'level': 'DEBUG',
+            'class': 'logging.StreamHandler',
+            'formatter': 'multi',
+        },
+    },
+    # every django app you create will have to have their logger set. set them
+    # here in the 'loggers' object. loggers['django'] is the name of our project
+    # leave it as is.
+    'loggers': {
+        'django': {
+            'handlers': ['applogfile', 'console'],
+            'level': 'DEBUG',
+        },
+
+    },
+}
+
 
 ALLOWED_HOSTS = []
 
